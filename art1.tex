@@ -1,0 +1,431 @@
+\documentclass[12pt]{report}
+
+\usepackage{cmap}
+\usepackage[cp1251]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts,amssymb,mathrsfs,amscd}
+\usepackage[pdftex]{graphicx}
+\usepackage[linesnumbered]{algorithm2e}
+\usepackage[colorlinks,urlcolor=blue]{hyperref}
+
+
+
+\textheight=24cm % высота текста
+\textwidth=16cm % ширина текста
+\oddsidemargin=0pt % отступ от левого края
+\topmargin=-1.5cm % отступ от верхнего края
+\parindent=24pt % абзацный отступ
+\parskip=0pt % интервал между абзацами
+\tolerance=2000 % терпимость к "жидким" строкам
+\flushbottom % выравнивание высоты страниц
+
+
+\usepackage{geometry} % Меняем поля страницы
+\geometry{left=2cm}% левое поле
+\geometry{right=1.5cm}% правое поле
+\geometry{top=1cm}% верхнее поле
+\geometry{bottom=2cm}% нижнее поле
+
+
+\newtheorem{ThRus}{Теорема}
+\newtheorem{Def}{Определение}
+\newtheorem{Prop}{Утверждение}
+\newtheorem{Example}{Пример}
+\newtheorem{Lemma}{Лемма}
+\newtheorem{Hyp}{Гипотеза}
+\newtheorem{Note}{Замечание}
+\newtheorem{Conclusion}{Следствие}
+\newtheorem{Problem}{Задача}
+\newtheorem{Algorithm}{Алгоритм}
+
+
+
+\renewcommand{\labelenumi}{\theenumi)}
+\newcommand{\pr}{\mathop{\mathrm{pr}}\nolimits}
+\newcommand{\ad}{\mathop{\mathrm{ad}}\nolimits}
+\newcommand{\Ad}{\mathop{\mathrm{Ad}}\nolimits}
+\newcommand{\Lie}{\mathop{\mathrm{Lie}}\nolimits}
+\newcommand{\rk}{\mathop{\mathrm{rk}}\nolimits}
+\newcommand{\diag}{\mathop{\mathrm{diag}}\nolimits}
+\newcommand{\Spec}{\mathop{\mathrm{Spec}}\nolimits}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\D}{\mathbb{D}}
+
+\begin{document}
+
+{ \Large \emph{Бочкарев Михаил}}\\
+
+\textbf\center{\LARGE Обзор алгоритмов анализа высокочастотной спонтанной активности.}
+
+\vspace{1cm}
+
+Эпилепсия является наиболее распространенным типом хронического неврологического заболевания, которое проявляется в судорожных приступах и/или потерях сознания. До 30\% людей страдающих эпилепсией не поддаются фармакологическому лечению \cite{EpileptDrug}, \cite{EpileptDrug2}.
+
+Считается, что эпилептический приступ вызывается неправильной работой потенциального небольшого числа зон коры головного мозга, называемых "зонами инициации приступа" \cite{PreSurgeEval}, \cite{Epilepsy_SOZ_definition}(ЗИП, англ. seizure onset zone, SOZ).
+Основной целью предоперационных исследований пациентов, страдающих фармакорезистентными формами эпилепсии, является локализация этих зон.
+
+Методы, применяемые для локализациии включают электроэнцефалографию (ЭЭГ), электрокортикографию (внутричерепное ЭЭГ ), магнитную энцефалографию (МЭГ), Функциональную магнитно-резонансную томографию и однофотонную эмиссионную компьютерную томографию (SPECT) \cite{Epilepsy_SOZ_definition}.
+Несмотря на принципиальные различия в методологии измерения и физическом смысле измеряемых величин, техники анализа данных, полученных перечисленными методами постоянно обогащали друг друга.
+
+Исследования при помощи микроэлектродов позволяют отслеживать активность мозга на уровне отдельных нейронов, что позволяет делать наиболее точные и конкретные утверждения о процессах мозга.
+Исследования проводимые на данном уровне дают наибольшую уверенность о существовании высокочастотных аномалий, связях с когнитивными процессами и различными заболеваниями \cite{HFOclinical}.
+
+По работам \cite{HFOcerebralEpilepsy},\cite{HFOvanQuyen} можно судить о том насколько схожими являются события, регистрируемые при помощи микроэлектродов и внечерепного ЭЭГ. В целом, для данных ЭЭГ характерен значительно меньшее SNR, особенно для высоких частот, и также этот вид данных более подвержен артефактам кардиального, окулярного или мышечного происхождения.
+
+\section*{Высокочастотные осцилляции}
+
+Одним из наиболее популярных на текущий момент (и эмпирически оправданных, согласно некоторым исследованиям) являются высокочастотные осцилляции (HFO). Явление HFO как таковое было обнаружено эмпирически, и при определении его наличия на различных видах данных исторически основано на мнении эксперта.
+
+
+	В работе \cite{HFO_at_epilepsy} подтверждается связь зон генерации Ripples and FastRipples и эпилепсией, а в работе \cite{FastRipplesImprOut} также указывается положительная корреляция полноты удаления этих зон с улучшением состояния пациентов после операции.
+
+В работе \cite{HFOepSpasms} не только проводится связь между HFO и эпилепсией, но и также указываются основные отличительные черты мышечного артефакта от HFO, потенциально связанных с эпилепсией. Для мышечной активности характерен сильный непрерывный спектр, когда как для потенциально интересных аномалий, связанных с эпилепсией характерно наличие 1-2 спектральных пиков.
+
+В литературе описаны некоторые подходы к автоматическому или полу-автоматическому определению наличия HFO \cite{AutoHFOsimplest} ,\cite{AutoHFO2} , но ни один из них пока не является абсолютно общепризнанным и исследования в этом направлении продолжаются\cite{HowAnalyzeGamma}.
+
+\section*{Задача сегментации HFO}
+
+Одной из первых попыток автоматической детекции HFO описывается в \cite{AutoHFOsimplest}. Авторы этой статьи вычисляли значение RMS, равное среднему квадратичному отфильтрованного сигнала в скользящем окне 3 мс. Далее отмечались участки сигнала, на котором вычисленное значение RMS превосходило среднее значение RMS более чем на 5 стандартных отклонений. Участки отделенные менее чем на 10 мс объединялись в один.
+Финальным критерием отбора было наличие 6 пиков ректифицированного сигнала выше порога среднего плюс 3 стандартных отклонения.
+
+Этот подход был немного усовершенствован в работе \cite{AutoHFO2}, где порог устанавливался на альтернативную меру энергии сигнала, его <<длины>>, вычисленной по формуле
+$$ E(t) = \sum_{i=0}^w |x(i+1)-x(i)|,$$
+где через $x$ обозначен сам сигнал, а через $w$ --- ширина скользящего окна.
+
+Авторами обсуждалось, что оценки энергии сигнала не являются нормально распределенными, и поэтому пороговое значение, основанное на перцентилях, нежели на стандартном отклонении, является более устойчивым к выбросам. Более того, повторная проверка на наличие нужного числа пиков может быть автоматически пройдена установлением достаточной минимальной длины найденных сегментов.
+
+Также авторы статьи провели анализ не только автоматических способом нахождения фрагментов HFO, но и присоединили его к анализу оценок трех независимых экспертов. Сегменты, выделенные всеми тремя экспертами были выделены как <<ground truth>>, т.е. заведомо достоверные участки HFO, и их алгоритм превосходил по точности на этих участках методы аналогичные \cite{AutoHFOsimplest}.
+
+Эксперты проходили идентификацию сегментов HFO независимо друг от друга. Повторная идентификация проводилась спустя значительное время (3 месяца) после первой. Использование $\kappa$-статистики показало, что ни один из экспертов, ни их анонимный консенсус не обладают достаточной воспроизводимостью.
+Также эксперты проходили верификацию предложенных им участков.
+
+Исследование оценок экспертов показало, что из-за большого числа данных люди склонны к большому числу ошибок 2-го рода, т.е. могут легко пропустить интересный кусок сигнала. Однако, число ошибок 1-го рода невелико. Автоматические способы выделяют большое число лишних интервалов, но обладают неплохой точностью на сегментах, верифицированных всеми экспертами. Также авторы отмечают что для всех пар детекторов (включая экспертов и предложенный в статье алгоритм) коэффициент корреляции Пирсона постоянен и равен $0.85$. Из этого авторы делают вывод, что их алгоритм находит как минимум фиксированную долю от всех истинных сегментов HFO и является приемлемым для анализа на крупных базах данных ЭЭГ.
+
+Эти методы автоматической детекции HFO на данных макро- и микроэлектродах показали свою эффективность в клинических исследованиях. В работе \cite{HFOMacroMicro} алгоритм из \cite{AutoHFO2} с заниженным порогом использовался для отбора высокочастотных событий. Из них 20\% были отмечены экспертами как настоящие HFO. Авторы отмечают повышенную частоту обоих выделенных типов (<<ripples>> и <<fast ripples>>) высокочастотных событий в потенциальных зонах очага эпилепсии (SOZ), определенных независимо по около-приступной активности.
+
+В работе \cite{FastRipplesImprOut} также использовался метод, аналогичный \cite{AutoHFOsimplest} и \cite{AutoHFO2}. Для выборки из 28 пациентов с фокальным очагом эпилепсии было показано, что более полная ресекция областей с большой частотой быстрых осцилляций (fast ripples) положительно влияла на исход операции (p = 0.091).
+
+В работе \cite{AutoUnsupervised} был предложен дополнительный к методу \cite{AutoHFOsimplest} шаг для уменьшения ошибок 1-го рода, допускаемых алгоритмом: сегмент проходил тест, если его спектральные характеристики были достаточно не похожими на окружающие его сегменты такой же длины.
+
+Для этого производилась оценка спектральной мощности для скользящих окон в 2-х секундной окрестности с шагом. Полученные вектора проецировались в 2-мерное пространство методом главных компонент, и проходили кластеризацию на основе модели смеси гауссовских распределений. Параметр $k$ числа распределений выбирался равным $1,2$ или $3$ на основе Байесовского информационного критерия ($BIC$). Для выбранного $k$ для лучшей из попыток вычислялось расстояние Махалонобиса от центров кластера до предлагаемого сегмента с высокочастотными осцилляциями. Сегменты с недостаточно большим расстоянием признавались недостаточно отличными от своего окружения.
+
+Среди всех отобранных фрагментов HFO проводилась кластеризация методом $k$-медиоидов на основе нормализованных оценок энергии и ряде других признаков. Основным достижением этой статьи является не только автоматическая сегментация, но и кластеризация большого числа сегментов высокочастотной активности. В этой работе было показано наличие 3-х неартефактных кластеров, 2 из которых имели унимодальную спектральную плотность, а третий класс содержал смешанные, бимодальные осцилляции. Кластеризация показала себя устойчивой при достаточно большом объеме выборки.
+
+Эта работа была взята за основу в \cite{HFO_mining}, и была продемонстрирована значимое повышение частоты лишь событий из низкочастотного (100-200Hz) класса в областях идентифицированных как очаг эпилепсии на основе активности около приступов. При этом такие же результаты  были получены на основе части выборки, отдаленной от приступов не менее чем на 10 минут.
+
+
+	В области ЭЭГ применялись и более продвинутые подходы к сегментации и кластеризации, но непосредственно к задаче HFO, по нашим сведениям, они не были применены.
+	В частности было бы интересно сравнить выдачу различных алгоритмов между собой и сравнить их с экспертным мнением о релевантности найденных участков к HFO.
+
+	Среди методов, которые, по нашему мнению, могли бы быть полезными в задаче автоматической сегментации HFO:
+\begin{itemize}
+\item Методы, основанные на определении точки разладки.
+
+Так как осцилляторная активность HFO должна выделяться относительно окружающей активности, то начало (а желательно и конец) HFO могут рассматриваться как точки разладки.
+
+	Так, например, в работе \cite{Segment_ChangePoint_Darkhovsky}
+метод разладки показал неплохие результаты для сегментации фаз сна по данным ЭЭГ.
+
+\item Методы, основанные на вариациях метода независимых компонент (ICA).
+
+	Методы основанные на ICA уже успешно применяются для подавления артефактов \cite{ICA_EEGLAB} и являются стандартом де-факто для автоматической обработки артефактов.
+	Также ICA (в комбинации с техниками пространственных фильтров) использовался для автоматической детекции спайков --- другого исторически важного биомаркера SOZ \cite{AutomatedInerictalSpike}.
+\end{itemize}
+
+	Отметим, что большинство указанных подходов (помимо ICA) использует посенсорный подход, не учитывая совместные показания сенсоров, как и расположение сенсоров и головы относительно друг друга.
+
+	Мы планируем продолжить поиски применяемых подходов  мультисенсорной сегментации, так как они видятся нам более релевантными к задачам МЭГ.
+	Также мы планируем провести сравнение с наивными, посенсорными подходами.
+
+\section*{Обратная задача EEG/MEG и ее математическая постановка}
+
+Исследования при помощи микроэлектродов позволяют отслеживать активность мозга на уровне отдельных нейронов, что позволяет делать наиболее точные и конкретные утверждения о процессах мозга.
+Исследования проводимые на данном уровне дают наибольшую уверенность о существовании высокочастотных аномалий, связях с когнитивными процессами и различными заболеваниями \cite{HFOclinical}. Макроэлектроды ЭЭГ дают показания, усредненные по небольшим участкам головной коры (или даже всей, в случае вне черепного ЭЭГ). Однако и такие исследования обычно не прибегают к методам локализации, и весь анализ производится по отдельности на каждом сенсоре.
+
+В случае МЭГ сенсоры находятся на расстоянии порядка сантиметра даже от поверхности головы. Поэтому, чтобы восстановить гипотетическую картину возбуждения зон коры головного мозга, исследователи прибегают к так называемой <<обратной задаче>>.
+
+Будем считать, что нам известна поверхность интересующих нас областей, заданная точками в 3-х мерном Евклидовом пространстве и списком ребер, или, в общем случае, задана произвольная трехмерная, покрывающая область потенциальных источников сигнала с достаточной плотностью. Хотя положение головы относительно сенсоров в общем случае, не зафиксировано, мы будем предполагать что голова колеблется вокруг фиксированного и известного положения, и колебаниями головы можно пренебречь. Число вершин в нашей сетке обозначим через $N_{src}$.
+
+Основной неизвестной величиной в биоэлектрической задаче, согласно \cite{sarvas_sphere_model} является векторное поле тока $\vec{J}$.
+Совокупность электрических токов, порождающих сигнал можно представить в виде суммы локальных инфинитезимальных токов, идеальных диполей \cite{dipole}. Таким образом мы дескретизируем (бесконечномерное) поле $\vec{J}(t)$, взятое в момент времени $t$ до вектора $j(t)$ размера $3*N_{src}$. Множитель $3$ возникает из-за того, что каждый диполь, обладает ориентацией, и элементы $j_{3*n-2},j_{3*n-1}$ и $j_{3*n}$ обозначают проекцию дипольного момента $n$-го диполя из сетки на оси некоторой ортонормальной системы координат.
+
+При известном поле тока $\vec{J}$, магнитное поле в любой точке пространства можно вычислить при помощи интегрирования по закону Био-Савара-Лапласа.
+Не вдаваясь в подробные формулы и выкладки, мы лишь упомянем, что при квазистатическом приближении уравнений Максвелла, вектор магнитной индукции зависит линейно от $\vec{J}$, и поэтому показания сенсоров линейно зависят от $j(t)$. Матрица линейного оператора $G$, которая преобразует $j(t)$ в показания сенсоров называется матрицей прямой задачи (gain matrix, lead field matrix).
+
+	В данной работе мы не рассматриваем методы  эффективного компьютерного вычисления матрицы $G$.
+	Отметим лишь что в популярном пакете $openmeeg$ \cite{openmeeg} вычисление производится на основе метода граничных элементов Галеркина.
+
+	При известной матрице $G$, показания сенсоров $D(t)$ в момент времени $t$ можно представить в виде стандартной линейной модели:
+
+$$D(t) = G * j(t) + \varepsilon,$$
+
+где через $\varepsilon$ мы обозначили случайный вектор шума, распределение которого обычно полагается многомерным нормальным распределением с нулевым средним.
+	Матрицу ковариации оценивают из каких-то других соображений.
+
+	В случае МЭГ часто имеются запись пустой комнаты, которая позволяет оценить ковариацию внешнего шума.
+	Также, если в целью исследования является проведение различий между двумя состояниями: <<активным>> и <<контрольным>>, то обычно неявно принимается гипотеза о стационарности этих состояний (или как минимум контрольного состояния).
+	В этом случае ковариацию оценивают усреднением по всем временным промежуткам контрольного состояния.
+
+Существуют и более сложные подходы к оценке этого члена, которые учитывают систематические, но нестационарные события, которые влияют на данные и считаются <<шумом>>.
+
+	В линейном случае, обратная задача заключается в построении линейного оператора $X$, который по вектору данных $D(t)$ восстановит оптимальное, в некотором смысле, значение $j(t)$.
+
+	Это известная задача статистического анализа и машинного обучения, и большинство методов ее решения так или иначе применялись и к области магнитной энцефалографии.
+
+	Различные методы и алгоритмы решения этой задачи, в основном, основываются на различных априорных предположениях о возможных значениях векторов $j(t)$ и различных функционалах качества, принимаемого заранее.
+	Один из наиболее общих подходов, основанный на Байесовской теории, позволяет подвести почти все существующие алгоритмы под решение одной и той же задачи, и объяснить предположения принимаемые в этих алгоритмах, описан в \cite{BayesianFramework_Wipf_Nagarajan}.
+	
+	Полный пересказ данной статьи выходит за рамки данной работы.
+	Мы лишь отметим, что большинство известных алгоритмов могут быть объяснены предположением, что вектора $j(t)$ распределены независимо, нормально, и имеют фиксированную матрицу ковариации $\Sigma_{src}$, где матрица $\Sigma_{src}$ фиксирована для всех временных интервалов из активной выборки.
+	Также отметим, что в подавляющем большинстве методов $\Sigma_{src}$ полагается блочно-диагональной, где вне диагональные корреляции допускаются только для различных ориентаций одного диполя.
+
+
+	Для задачи локализации эпилептогенной зоны, характерны следующие предположения:
+\begin{itemize}
+	\item Активность эпилептогенной зоны является повторяемым событием.
+	\item Активность эпилептогенной зоны является более сильной, нежели нормальная активность.
+	\item Активность эпилептогенной зоны может распространятся на другие зоны мозга, непосредственно связанные с ней по <<эпилептогенной сетке>> (или, другими словами, зоной ирритации), вызывая в ней абнормальную активность.
+
+\end{itemize}
+
+	Отметим, что для 	<<эпилептогенной сетки>> неизвестно, можно ли определить очаг эпилепсии по критерию большей частоты событий, или большей мощности  сигнала в этих событиях.
+	Так как критерий по одной лишь мощности отдает явное предпочтение артефактам, которые почти неизбежно присутствуют в любых записях, исследователи склоняются именно к частотному критерию, как критерию характеризации SOZ.
+
+Характерными свойствами высокочастотной активности активности являются локальность и кратковременность.
+
+Учитывая вышесказанное, мы отдаем предпочтение методу $CHAMPAGNE$, основанному на идеях автоматического определения релевантности. Алгоритм сам определяет <<наиболее правдоподобную>> блочно-диагональную матрицу ковариации источников, основываясь на максимизации правдоподобия $II$ рода. В работе \cite{} было продемонстрированы преимущества данного алгоритма в случае неизвестного многодипольного (в экспериментах использовалось до 8 диполей) распределения в пространстве источников в условиях шума.
+
+\section*{Меры коннективности}
+
+	Логично ожидать наличие некоторой причинно-следственной связи между очагом эпилепсии и другими источниками в зоне ирритации. Предполагается, что SOZ в этом случае должна выступать в качестве <<причины>>, и, возможно, наиболее часто вступает в подобные <<взаимодействия>>.
+
+	Рассуждения и предположения подобного рода обобщается понятием коннективности (связанности)
+\cite{Firston_connectivity},
+\cite{Connectiviy_measures_GreenBlat}.
+
+Например, для двух комплексно-значных сигналов $s_1(t), s_2(t)$ можно определить когерентность
+
+\begin{align*}
+	Coh(s1,s2) = \E \frac{ s_1(t) s_2(t)}{ |s_1(t)| |s_2(t)| },
+\end{align*}
+
+или статистику Phase Lock Value
+\begin{align*}
+	PLV = \E \exp(i\varphi_1(t) - i\varphi_2(t)),
+\end{align*}
+
+где знак $\E$ обозначает математическое ожидание взятое по времени или разным испытаниям, а через $\varphi_1(t),\varphi_2(t)$ обозначена фаза комплексно-значных сигналов.
+
+
+	Обычно меры коннективности вычисляются в экспериментальной парадигме, в которой можно провести усреднение по большому количеству однородных измерений.
+
+	Вообще говоря, описанные выше методы решения обратной задачи в целом, не дают никаких гарантий на верность оценки параметров какой либо коннективности, даже если предположения о модели порождения сигнала выполняются в точности.
+
+	Отметим, что существуют методы заточенные на оценку именно коннективности, в обход (а точнее сказать, вместо) решения обратной задачи тем или иным способом.
+
+	Тем не менее, никто не мешает по крайней мере пытаться использовать комбинации некоторых методов решения обратной задачи и мер коннективности в качестве потенциального предсказателя зоны SOZ.
+
+
+\begin{thebibliography}{99}
+
+\bibitem{BeamformImageProp}
+    J. Grossa, L. Timmermanna, J. Kujalab, R. Salmelinb, A. Schnitzlera.
+    Properties of MEG tomographic maps obtained with spatial filtering.
+    NeuroImage, Volume 19, Issue 4, August 2003, pp. 1329–1336.
+
+\bibitem{HFO_mining} Blanco J.A., Stead M., Krieger A., Stacey W., Maus D., Marsh E., Viventi J., Lee K.H., Marsh R., Litt B., Worrell G.A.
+    Data mining neocortical high-frequency oscillations in epilepsy and controls.
+    Brain. 2011 Oct;134(Pt 10):2948-59. doi: 10.1093/brain/awr212. Epub 2011 Sep 8.
+
+\bibitem{EpileptDrug2} Brodie, M. J., Dichter, M. A.
+    Antiepileptic drugs New England Journal of Medicine, 1996, 334, pp. 168-175.
+
+\bibitem{ThetaPhaseLock}
+    R. T. Canolty, E. Edwards, S. S. Dalal, M. Soltani, S. S. Nagarajan, H. E. Kirsch, M. S. Berger N. M. Barbaro and R. T. Knight.
+    High Gamma Power Is Phase-Locked to Theta Oscillations in Human Neocortex.
+    Science. 2006 Sep 15; 313(5793), pp. 1626–1628.
+    doi:  10.1126/science.1128115
+
+\bibitem{Connectiviy_measures_GreenBlat}
+	R.E. Greenblatt, M.E. Pflieger, A.E. Ossadtchi.
+    Connectivity measures applied to human brain.
+    Journal of Neuroscience Methods. Volume 207, Issue 1, pages 1–16, 30 May 2012.
+
+\bibitem{nodipole} Kobayashi K. et al. Dipole modeling of epileptic spikes can be accurate or misleading. Epilepsia.
+– 2005. – Т. 46. – No. 3. – pp. 397-408.
+
+\bibitem{tsss} S. Taulu , R. Hari. Removal of magnetoencephalographic artifacts with temporal signal-space
+separation: Demonstration with single-trial auditory-evoked responses. Human Brain Mapping.
+Volume 30, Issue 5, pages 1524–1534, May 2009.
+
+\bibitem{fastosc} Traub R. D. et al. A possible role for gap junctions in generation of very fast EEG oscillations preceding the onset of, and perhaps initiating, seizures. Epilepsia. – 2001. – Т. 42. – No. 2. – pp.153-170.
+
+\bibitem{FastRipplesImprOut} Akiyama, T., McCoy, B., Go, C. Y., Ochi, A., Elliott, I. M., Akiyama, M., Donner, E. J., Weiss, S. K., Snead, O. C., Rutka, J. T., Drake, J. M. and Otsubo, H. (2011), Focal resection of fast ripples on extraoperative intracranial EEG improves seizure outcome in pediatric epilepsy. Epilepsia, 52: 1802–1811. doi: 10.1111/j.1528-1167.2011.03199.x
+
+
+
+\bibitem{AutoHFO2}
+    A. B. Gardner, G. A. Worrell, E. Marsh , D. Dlugos, B. Litt.
+    Human and automated detection of high-frequency oscillations in clinical intracranial EEG recordings.
+    Clinical Neurophysiology 118 (2007) pp. 1134–1143.
+
+\bibitem{GammaEEGdisorders}
+    C.S. Herrmanna, T. Demiralp.
+    Human EEG gamma oscillations in neuropsychiatric disorders.
+    Clinical Neurophysiology 116 (2005), pp. 2719–2733.
+
+\bibitem{HowAnalyzeGamma}
+    G.A. Worrell, K. Jerbi, K. Kobayashi, J.M. Lina, R. Zelmann, M. Le Van Quyen.
+    Recording and analysis techniques for high-frequency oscillations.
+    Progress in Neurobiology 98 (2012) pp. 265–278.
+
+\bibitem{AutoUnsupervised}
+    J. A. Blanco, M. Stead, A. Krieger, J. Viventi, W. R. Marsh.
+    Unsupervised Classification of High-Frequency Oscillations in Human Neocortical Epilepsy and Control Patients.
+
+\bibitem{BeamSamg2}
+    H.E. Kirsch, S.E. Robinson, M. Mantle, S. Nagarajan.
+    Automated localization of magnetoencephalographic interictal
+    spikes by adaptive spatial filtering.
+    Clinical Neurophysiology 117 (2006), pp. 2264–2271.
+
+\bibitem{HFOvanQuyen}
+    M. Le Van Quyen, R. Staba, A. Bragin, C. Dickson, M. Valderrama, I. Fried, and J. Engel.
+    Large-Scale Microelectrode Recordings of High-Frequency Gamma Oscillations in Human Cortex during Sleep.
+    The Journal of Neuroscience, 9 June 2010, 30(23): pp. 7770-7782; doi: 10.1523/JNEUROSCI.5049-09.2010
+
+\bibitem{PreSurgeEval}
+    F. Rosenow, H.Luders.
+    Presurgical evaluation of epilepsy.
+    Brain (2001), 124, pp. 1683-1700.
+
+\bibitem{GammaAbnorm}
+    J. O. Willoughby, S. P. Fitzgibbon, K. J. Pope, L. Mackenzie, A. V. Medvedev, C. R. Clark,
+    M. P. Davey, R. A. Wilcox.
+    Persistent abnormality detected in the non-ictal electroencephalogram in primary generalised epilepsy.
+    J. Neurol. Neurosurg. Psychiatry 2003;74: pp. 51–55.
+
+\bibitem{HFOMacroMicro}
+    G. A. Worrell, A. B. Gardner, S. M. Stead, S. Hu, S. Goerss, G. J. Cascino, F.B. Meyer, R. Marsh and B. Litt.
+    High-frequency oscillations in human temporal
+    lobe: simultaneous microwire and clinical
+    macroelectrode recordings.
+    Brain (2008),131, pp. 928:937.
+
+\bibitem{AutoHFOsimplest}
+    R. J. Staba , C. L. Wilson , A. Bragin , I. Fried , J. Engel.
+    Quantitative Analysis of High-Frequency Oscillations (80–500 Hz) Recorded in Human Epileptic Hippocampus and Entorhinal Cortex.
+    Journal of Neurophysiology, October 2002 Vol. 88 no. 4, pp. 1743-1752.
+
+\bibitem{HFOclinical}
+    J. Jacobs, R. Staba, E. Asano, H. Otsubo, J.Y. Wu, M. Zijlmans, I. Mohamed, P. Kahane, F. Dubeau, V. Navarro, and J. Gotmanh.
+    High-frequency oscillations (HFOs) in clinical epilepsy.
+    Progress in Neurobiology, Volume 98, Issue 3, September 2012, pp. 302–315.
+
+\bibitem{HFObrag2002} Bragin A. et al.
+    Interictal high frequency oscillations (80–500Hz) in the human epileptic brain: Entorhinal cortex.
+    Annals of neurology. – 2002. – Т. 52. – No. 4. – pp. 407-415.
+
+\bibitem{HFOepSpasms}
+    K. Kobayashi, M. Oka, T. Akiyama, T. Inoue, K. Abiru, T. Ogino, H. Yoshinaga, Y. Ohtsuka and E. Oka.
+    Very Fast Rhythmic Activity on Scalp EEG Associated with Epileptic Spasms.
+    Epilepsia, Volume 45, Issue 5, pp. 488–496, May 2004.
+
+\bibitem{HFOcerebralEpilepsy}
+    I. Fried, C. L. Wilson, N. T. Maidment, J. Engel, Jr., E. Behnke, T. A. Fields, , K. A. Macdonald, J. W. Morrow and L. Ackerson.
+    Cerebral microdialysis combined with single-neuron and electroencephalographic recording in neurosurgical patients.
+    Journal of Neurosurgery, October 1999, Vol. 91, No. 4, pp. 697-705.
+
+\bibitem{HFOhipp}
+    A. Bragin, J. Engel, Jr., C. L. Wilson, I. Fried, and G. Buzsaki.
+    High-Frequency Oscillations in Human Brain.
+    HIPPOCAMPUS 9 (1999), pp. 137–142.
+
+\bibitem{EpileptDrug} Sander, J. W.
+    Some aspects of prognosis in the epilepsies: a review Epilepsia, 1993, 34, pp. 1007-1016.
+
+\bibitem{BeamBasic}
+    B.D. Van Veen,  W. van Drongelen, M. Yuchtman,  A. Suzuki.
+    Localization of brain electrical activity via linearly constrained minimum variance
+    spatial filtering.
+    IEEE Trans, Biomed Eng. 44, 1997, pp. 867–880.
+
+\bibitem{BeamLCMVandSAM}
+    J. Vrba and S. E. Robinson.
+    Differences between synthetic aperture magnetometry (SAM) and linear beamformers.
+    Biomag2000, Proc. 12th Int. Conf. Biomag.,  2000.
+
+\bibitem{ECDRapMusic}
+    J. C. Mosher and R. M. Leahy.
+    Source localization using recursively applied and projected (RAP) MUSIC.
+    Signals, Systems, and Computers, record of 31st Asilomar Conf.,  vol. 2,  pp.1302 -1306, 1997.
+
+\bibitem{BeamLocEstim}
+    R. E. Greenblatt, A. Ossadtchi, and M.E. Pfliege.
+    Local Linear Estimators for the Bioelectromagnetic Inverse Problem.
+     Signal Processing, IEEE Trans, Volume 53, Issue 9, pp. 3403 - 3412, Sept. 2005.
+
+\bibitem{MEGspikeSOZ}
+    A. G. Guggisberg, H. E. Kirsch, M. M. Mantle, N. M. Barbaro, and S. S. Nagarajan.
+    Fast oscillations associated with interictal spikes localize the epileptogenic zone in patients with partial epilepsy.
+    NeuroImage Vol. 39 (2008) pp. 661–668.
+
+\bibitem{Epilepsy_SOZ_definition} Luders, H. O., Najm, I., Nair, D., Widdess-Walsh, P., Bingman, W.
+    The epileptogenic zone: general principles. Epileptic disorders (2006), 8, S1.
+
+\bibitem{mne_basic}  Hamalainen M.S., Ilmoniemi R.J.
+    Interpreting magnetic fields of the brain: minimum norm estimates.
+    Med. Biol. Eng. Comput. 1994 Jan32(1):pp. 35-42.
+
+\bibitem{sarvas_sphere_model} Sarvas J.
+    Basic mathematical and electromagnetic concepts of the biomagnetic inverse problem.
+    Phys. Med. Biol. 1987 Jan;32(1):pp. 11-22.
+
+\bibitem{dipole} Geselowitz. D. B.
+    On Bioelectric Potentials in an Inhomogeneous Volume Conductor.
+    Biophys J. 1967 Jan; 7(1):pp. 1–11.
+
+\bibitem{openmeeg} Gramfort A., Papadopoulo T., Olivi E., Clerc M.
+    OpenMEEG: opensource software for quasistatic bioelectromagnetics
+    BioMedical Engineering OnLine 45:9, 2010.
+
+\bibitem{Firston_connectivity} K. J. Friston.
+	Functional and effective connectivity in neuroimaging: A synthesis.
+	Hum. Brain Mapp., 2: pp. 56–78. doi: 10.1002/hbm.460020107.
+
+\bibitem{BayesianFramework_Wipf_Nagarajan}
+	D. Wipf and S. Nagarajan
+	A Unified Bayesian Framework for MEG/EEG Source Imaging.
+Neuroimage. 2009 Feb 1; 44(3): 947–966.
+
+\bibitem{Segment_ChangePoint_Darkhovsky}
+	A. Kaplanan, J. Roschkec, B. Darkhovsky, J. Fell.
+	Macrostructural EEG characterization based on nonparametric change point segmentation: application to sleep analysis.
+	Journal of Neuroscience Methods
+Volume 106, Issue 1, 30 March 2001, pp. 81–90.
+
+\bibitem{HFO_at_epilepsy}
+	J. R. Cho, E. Y. Joo, D. L. Koo,a S. C. Hong,  S. Bong.
+	Clinical Utility of Interictal High-Frequency Oscillations Recorded with Subdural Macroelectrodes in Partial Epilepsy.
+	J Clin Neurol. 2012 Mar; 8(1): 22–34.
+Published online 2012 Mar 31. doi:  10.3988/jcn.2012.8.1.22
+PMCID: PMC3325429
+
+\bibitem{ICA_EEGLAB}
+	A. Delorme, S. Makeig.
+	Cover image EEGLAB: an open source toolbox for analysis of single-trial EEG dynamics including independent component analysis.
+	Journal of Neuroscience Methods
+Volume 134, Issue 1, 15 March 2004, Pages 9–21.
+
+\bibitem{AutomatedInerictalSpike}
+	A. Ossadtchy, S. Baillet, J.C. Mosher, D. Thyerleid, W. Sutherling, R.M. Leahya.
+	Automated interictal spike detection and source localization in magnetoencephalography using independent components analysis and spatio-temporal clustering.
+	Clinical Neurophysiology, Volume 115, Issue 3, March 2004, Pages 508–522.
+
+
+
+\end{thebibliography}
+\end{document}
+
